@@ -2,7 +2,7 @@
 
 ## 概述
 
-沙盒系统由两个主要类组成：`SandboxFactory` 和 `Sandbox`。`SandboxFactory` 负责创建和管理沙盒实例，采用单例模式确保整个应用中只有一个工厂实例。`Sandbox` 类代表一个Docker容器实例，提供了容器操作的各种方法。
+沙盒系统由两个主要类组成：`SandboxFactory` 和 `Sandbox`。`SandboxFactory` 负责创建和管理docker沙盒实例，采用单例模式确保整个应用中只有一个工厂实例。`Sandbox` 类代表一个Docker容器实例，提供了容器操作的各种方法。
 
 ## SandboxConfig 类
 
