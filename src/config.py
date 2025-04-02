@@ -21,7 +21,7 @@ class SandboxConfig:
     # 容器网络设置
     network_disabled: bool = True
     # 默认开放的VNC端口
-    vnc_port: int = 5900
+    vnc_port: int = 6080
     # 容器安全设置
     privileged: bool = False
     # 容器环境变量

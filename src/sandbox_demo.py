@@ -145,12 +145,12 @@ def main():
         # 创建配置
         print("\n1. 创建沙盒配置")
         config = SandboxConfig(
-            image_name="ubuntu",
-            image_tag="latest",
+            image_name="vnc_sandbox_test",
+            image_tag="1.0",
             mem_limit="512m",
             network_disabled=False,  # 允许网络连接以便映射端口
             environment={"DEMO_ENV": "hello_world"},
-            vnc_port=5900  # 设置VNC端口
+            vnc_port=6080  # 设置VNC端口
         )
         print(f"配置创建成功: {config}")
 
@@ -207,6 +207,25 @@ def main():
             sandbox2 = factory.run(session_id, host_port=host_port)
             if sandbox2:
                 print(f"沙盒创建成功: container_id={sandbox2.container_id}, VNC端口映射: 5900 -> {host_port}")
+                
+                # 上传并执行 start.sh 脚本
+                start_script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "start.sh")
+                if os.path.exists(start_script_path):
+                    print(f"\n上传并执行 start.sh 脚本")
+                    if sandbox2.upload_file(start_script_path, "/tmp"):
+                        print("start.sh 上传成功")
+                        # 添加执行权限并运行脚本
+                        process = sandbox2.exec(["chmod", "+x", "/tmp/start.sh"])
+                        process.wait()
+                        process = sandbox2.exec(["/tmp/start.sh"])
+                        for line in process.stdout:
+                            print(f"脚本输出: {line}", end='')
+                        return_code = process.wait()
+                        print(f"脚本执行完成，退出码: {return_code}")
+                    else:
+                        print("start.sh 上传失败")
+                else:
+                    print(f"start.sh 脚本不存在: {start_script_path}")
             else:
                 print("沙盒创建失败")
         except Exception as e:
@@ -245,22 +264,22 @@ def main():
                 print(f"错误详情: {traceback.format_exc()}")
 
         # 删除所有沙盒
-        print("\n9. 删除所有沙盒")
-        try:
-            all_sandboxes = factory.list()
-            for sandbox in all_sandboxes:
-                print(f"删除沙盒: session_id={sandbox.session_id}")
-                try:
-                    if factory.remove(sandbox.session_id):
-                        print("删除成功")
-                    else:
-                        print("删除失败")
-                except Exception as e:
-                    print(f"删除沙盒 {sandbox.session_id} 时出错: {str(e)}")
-        except Exception as e:
-            print(f"获取沙盒列表时出错: {str(e)}")
+        # print("\n9. 删除所有沙盒")
+        # try:
+        #     all_sandboxes = factory.list()
+        #     for sandbox in all_sandboxes:
+        #         print(f"删除沙盒: session_id={sandbox.session_id}")
+        #         try:
+        #             if factory.remove(sandbox.session_id):
+        #                 print("删除成功")
+        #             else:
+        #                 print("删除失败")
+        #         except Exception as e:
+        #             print(f"删除沙盒 {sandbox.session_id} 时出错: {str(e)}")
+        # except Exception as e:
+        #     print(f"获取沙盒列表时出错: {str(e)}")
 
-        print("\n=== 演示结束 ===")
+        # print("\n=== 演示结束 ===")
     
     except Exception as e:
         print(f"演示过程中出现未处理的错误: {str(e)}")
