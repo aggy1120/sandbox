@@ -137,6 +137,95 @@ def demonstrate_exec(sandbox):
     return_code = process.wait()
     print(f"命令退出码: {return_code}")
 
+def test_execute_hello_script(sandbox):
+    """
+    在带VNC端口映射的沙盒中上传、设置环境变量并执行hello.py脚本
+    
+    参数:
+        sandbox: 已创建的沙盒实例，需要有VNC端口映射
+    """
+    if not sandbox:
+        print("沙盒不可用，无法执行测试")
+        return
+    
+    if not sandbox.host_port:
+        print("沙盒没有端口映射，无法执行带VNC的测试")
+        return
+    
+    try:
+        # 步骤1: 创建临时hello.py脚本文件
+        hello_script_path = "hello.py"
+        with open(hello_script_path, "w") as f:
+            f.write("""
+from langchain_openai import ChatOpenAI
+from browser_use import Agent
+from dotenv import load_dotenv
+load_dotenv()
+
+import asyncio
+
+llm = ChatOpenAI(model="gpt-4o")
+
+async def main():
+    agent = Agent(
+        task="Compare the price of gpt-4o and DeepSeek-V3",
+        llm=llm,
+    )
+    result = await agent.run()
+    print(result)
+
+asyncio.run(main())
+""")
+        
+        # 步骤1: 上传脚本到沙盒
+        print("\n1. 上传hello.py脚本到沙盒")
+        container_path = "/tmp"
+        success = sandbox.upload_file(hello_script_path, container_path)
+        
+        if success:
+            print("hello.py脚本上传成功")
+            
+            # 步骤2: 在沙盒中创建.env文件
+            print("\n2. 在沙盒中创建.env文件")
+            env_content = "OPENAI_API_KEY=xxx"
+            process = sandbox.exec([
+                "bash", "-c", 
+                f"echo '{env_content}' > /tmp/.env && "
+                "echo '.env文件创建成功:' && "
+                "cat /tmp/.env"
+            ])
+            for line in process.stdout:
+                print(line, end='')
+            return_code = process.wait()
+            if return_code != 0:
+                print(f".env文件创建失败，错误码: {return_code}")
+                return
+            
+            # 步骤3: 执行脚本
+            print("\n3. 在沙盒中执行hello.py脚本")
+            # 从.env文件加载环境变量并执行脚本
+            process = sandbox.exec([
+                "bash", "-c", 
+                "cd /tmp && "
+                "export $(cat .env) && "
+                "DISPLAY=:1 python hello.py"
+            ])
+            
+            print("脚本输出:")
+            for line in process.stdout:
+                print(f"  {line}", end='')
+            
+            return_code = process.wait()
+            print(f"脚本执行完成，退出码: {return_code}")
+        else:
+            print("hello.py脚本上传失败")
+    
+    finally:
+        # 清理本地临时文件
+        if os.path.exists(hello_script_path):
+            os.remove(hello_script_path)
+            print("已删除本地临时脚本文件")
+
 def main():
     """演示如何使用沙盒系统"""
     try:
@@ -208,24 +297,13 @@ def main():
             if sandbox2:
                 print(f"沙盒创建成功: container_id={sandbox2.container_id}, VNC端口映射: 6080 -> {host_port}")
                 
-                # # 上传并执行 start.sh 脚本
-                # start_script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "start.sh")
-                # if os.path.exists(start_script_path):
-                #     print(f"\n上传并执行 start.sh 脚本")
-                #     if sandbox2.upload_file(start_script_path, "/tmp"):
-                #         print("start.sh 上传成功")
-                #         # 添加执行权限并运行脚本
-                #         process = sandbox2.exec(["chmod", "+x", "/tmp/start.sh"])
-                #         process.wait()
-                #         process = sandbox2.exec(["/tmp/start.sh"])
-                #         for line in process.stdout:
-                #             print(f"脚本输出: {line}", end='')
-                #         return_code = process.wait()
-                #         print(f"脚本执行完成，退出码: {return_code}")
-                #     else:
-                #         print("start.sh 上传失败")
-                # else:
-                #     print(f"start.sh 脚本不存在: {start_script_path}")
+                # 测试执行hello.py脚本
+                print("\n执行hello.py脚本测试")
+                try:
+                    test_execute_hello_script(sandbox2)
+                except Exception as e:
+                    print(f"执行hello.py脚本测试时出错: {str(e)}")
+                    print(f"错误详情: {traceback.format_exc()}")
             else:
                 print("沙盒创建失败")
         except Exception as e:
