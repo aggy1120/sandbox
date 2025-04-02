@@ -12,8 +12,6 @@ class SandboxConfig:
     image_tag: str = "latest"
     # 容器默认工作目录
     working_dir: str = "/opt"
-    # 容器默认命令
-    default_command: str = "tail -f /dev/null"
     # 容器资源限制
     mem_limit: Optional[str] = None  # 例如: "512m"
     cpu_period: Optional[int] = None

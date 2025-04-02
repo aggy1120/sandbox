@@ -325,7 +325,6 @@ class SandboxFactory:
                     # 创建容器
                     container = self.client.containers.run(
                         f"{self.config.image_name}:{self.config.image_tag}",
-                        command=self.config.default_command,
                         working_dir=self.config.working_dir,
                         detach=True,
                         mem_limit=self.config.mem_limit,

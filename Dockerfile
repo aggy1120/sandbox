@@ -9,12 +9,12 @@ novnc websockify \
 libgtk-4-1 libgraphene-1.0-0 libxslt1.1 libwoff1 libvpx7 libevent-2.1-7 libgstreamer-gl1.0-0 libgstreamer-plugins-bad1.0-0 libflite1 libharfbuzz-icu0 libenchant-2-2 libhyphen0 libmanette-0.2-0 libgles2 \
 fonts-liberation xdg-utils dnsutils ttf-wqy-zenhei
 # 安装git、curl
-RUN apt-get install git
+RUN apt-get install -y git
 #安装uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-RUN source $HOME/.local/bin/env
+ENV PATH="/root/.local/bin:${PATH}"
 #安装 vi
-RUN apt-get install vim
+RUN apt-get install -y vim
 
 # 配置 VNC 密码
 RUN mkdir -p ~/.vnc && echo "mypassword" | x11vnc -storepasswd - ~/.vnc/passwd
@@ -22,5 +22,7 @@ RUN mkdir -p ~/.vnc && echo "mypassword" | x11vnc -storepasswd - ~/.vnc/passwd
 RUN pip3 config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple && pip3 install flask docker
 # 启动脚本
 COPY start.sh /start.sh
+RUN chmod +x /start.sh
+RUN mkdir -p /var/log/vnc && chmod 777 /var/log/vnc
 EXPOSE 5900 6080 5000
-CMD ["/start.sh"]
+CMD ["/bin/bash", "-c", "set -x && /start.sh"]
