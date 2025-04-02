@@ -146,7 +146,7 @@ def main():
         print("\n1. 创建沙盒配置")
         config = SandboxConfig(
             image_name="sandbox",
-            image_tag="1.0.0",
+            image_tag="2.0.0",
             mem_limit="512m",
             network_disabled=False,  # 允许网络连接以便映射端口
             environment={"DEMO_ENV": "hello_world"},
